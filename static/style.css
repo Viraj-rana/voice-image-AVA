@@ -1,0 +1,97 @@
+.logo-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.logo-container img {
+    max-height: 60px;
+    width: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.main .block-container {
+    padding-top: 2rem;
+    padding-right: 100px;
+}
+
+/* Social media style cards */
+.css-1r6slb0 {
+    border-radius: 15px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-left: 5px solid #1f77b4;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Button styles */
+.stButton > button {
+    border-radius: 10px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Gallery grid */
+.stImage {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.stImage:hover {
+    transform: scale(1.05);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .logo-container {
+        position: relative;
+        top: 0;
+        right: 0;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .main .block-container {
+        padding-right: 1rem;
+    }
+}
+
+/* For mobile responsiveness */
+@media (max-width: 768px) {
+    .logo-container {
+        position: relative;
+        top: 0;
+        right: 0;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .main .block-container {
+        padding-right: 1rem;
+    }
+}
+
+.logo-container img {
+    margin: 48px;
+    max-height: 60px;
+    width: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);}
+
+
+    .st-emotion-cache-467cry h1 {
+    COLOR: gainsboro;
+    FONT-FAMILY: inherit;
+    font-size: 2.75rem;
+    font-weight: 700;
+    padding: 1.25rem 0px 1rem;
+}
