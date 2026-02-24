@@ -9,6 +9,7 @@ import io
 import pyttsx3
 import speech_recognition as sr
 import time
+import numpy
 from datetime import datetime
 
 # Page configuration
@@ -491,4 +492,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
