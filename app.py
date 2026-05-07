@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 import os
 import random
@@ -11,6 +9,8 @@ import speech_recognition as sr
 import time
 import numpy
 from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Any
 
 # Page configuration
 st.set_page_config(
@@ -20,26 +20,129 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
-def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+# Custom CSS with dynamic footer color support
+def apply_custom_css():
+    """Apply custom CSS styles with dynamic footer color"""
+    # Base CSS (no footer color yet - that will be set dynamically)
+    base_css = """
+    <style>
+    .logo-container {
+        position: fixed;
+        top: 20px;
+        right: 30px;
+        z-index: 1000;
+    }
+    
+    .main-header {
+        margin-bottom: 2rem;
+    }
+    
+    .stButton > button {
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Card-like effect for images */
+    .stImage {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .stImage:hover {
+        transform: scale(1.02);
+    }
+    
+    /* Info box styling */
+    .stAlert {
+        border-radius: 10px;
+    }
+    
+    /* Footer styling - color will be injected dynamically */
+    .dynamic-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem;
+        text-align: center;
+        background: linear-gradient(135deg, {color1}, {color2});
+        color: white;
+        font-weight: 500;
+        z-index: 999;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        transition: all 0.5s ease;
+    }
+    
+    .dynamic-footer a {
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    
+    .dynamic-footer a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Add padding to main content to prevent footer overlap */
+    .main .block-container {
+        padding-bottom: 5rem;
+    }
+    </style>
+    """
+    st.markdown(base_css, unsafe_allow_html=True)
+
+def get_dynamic_footer_color():
+    """Generate dynamic gradient colors based on current time"""
+    now = datetime.now()
+    # Use hour, minute, second to create shifting colors
+    hue1 = (now.hour * 15 + now.minute * 0.25) % 360
+    hue2 = (hue1 + 40) % 360
+    color1 = f"hsl({hue1}, 70%, 45%)"
+    color2 = f"hsl({hue2}, 80%, 35%)"
+    return color1, color2
+
+def add_dynamic_footer():
+    """Add a footer with dynamically changing gradient background"""
+    color1, color2 = get_dynamic_footer_color()
+    footer_html = f"""
+    <div class="dynamic-footer">
+        🌟 Voice Photo Social | 🗣️ Voice-Controlled Photo Gallery | 
+        <a href="#" target="_blank">Share with friends</a> | 
+        <span style="opacity:0.8;">✨ Color changes dynamically</span>
+    </div>
+    """
+    # Inject the gradient colors into the CSS just for this run
+    gradient_css = f"""
+    <style>
+    .dynamic-footer {{
+        background: linear-gradient(135deg, {color1}, {color2});
+    }}
+    </style>
+    """
+    st.markdown(gradient_css, unsafe_allow_html=True)
+    st.markdown(footer_html, unsafe_allow_html=True)
 
 def add_logo(logo_path, width=60):
-    """Add a logo to the top right corner of the app"""
+    """Add a logo to the top right corner of the app (graceful fallback)"""
     try:
-        with open(logo_path, "rb") as f:
-            logo_data = f.read()
-        logo_base64 = base64.b64encode(logo_data).decode()
-        
-        logo_html = f"""
-        <div class="logo-container">
-            <img src="data:image/png;base64,{logo_base64}" width="{width}">
-        </div>
-        """
-        st.markdown(logo_html, unsafe_allow_html=True)
-    except Exception as e:
-        st.warning(f"Could not load logo: {e}")
+        if os.path.exists(logo_path):
+            with open(logo_path, "rb") as f:
+                logo_data = f.read()
+            logo_base64 = base64.b64encode(logo_data).decode()
+            logo_html = f"""
+            <div class="logo-container">
+                <img src="data:image/png;base64,{logo_base64}" width="{width}">
+            </div>
+            """
+            st.markdown(logo_html, unsafe_allow_html=True)
+    except Exception:
+        pass  # Silently ignore logo errors
 
 # Initialize session state
 if 'last_command' not in st.session_state:
@@ -61,61 +164,37 @@ class VoicePhotoSocial:
         """Create images directory if it doesn't exist"""
         os.makedirs(self.images_base_path, exist_ok=True)
     
-  from datetime import datetime
-import os
-from pathlib import Path
-from typing import List, Dict, Any
-
-
-class YourClass:  # (whatever your class name is)
-
     def load_all_photos(self) -> List[Dict[str, Any]]:
-        """
-        Load metadata of all image files from the images folder.
-        
-        Returns:
-            List of dictionaries with photo information
-        """
+        """Load metadata of all image files from the images folder"""
         photos = []
         if not os.path.exists(self.images_base_path):
-            return photos
-
-        base_path = Path(self.images_base_path)
+            st.session_state.all_photos = []
+            return []
         
-        # Supported image extensions (lowercase)
+        base_path = Path(self.images_base_path)
         image_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
-
+        
         for entry in base_path.iterdir():
             if not entry.is_file():
                 continue
-                
             suffix = entry.suffix.lower()
             if suffix not in image_extensions:
                 continue
-
+            
             try:
                 ctime = entry.stat().st_ctime
                 upload_date = datetime.fromtimestamp(ctime).strftime("%Y-%m-%d %H:%M")
-                
-                # Use stem → filename without extension
                 person_name = entry.stem.capitalize()
-
+                
                 photos.append({
-                    'path': str(entry),               # consistent with original
+                    'path': str(entry),
                     'filename': entry.name,
                     'name': person_name,
                     'upload_date': upload_date,
-                    'size': entry.stat().st_size      # bytes
+                    'size': entry.stat().st_size
                 })
-                
             except (OSError, FileNotFoundError):
-                # Skip files we cannot stat (deleted/moved in the meantime, permission issues...)
                 continue
-
-        # Optional: sort by upload date (newest first) – very common need
-        photos.sort(key=lambda x: x['upload_date'], reverse=True)
-
-        return photos
         
         # Sort by upload date (newest first)
         photos.sort(key=lambda x: x['upload_date'], reverse=True)
@@ -130,8 +209,8 @@ class YourClass:  # (whatever your class name is)
             engine.setProperty('rate', 150)
             engine.say(text)
             engine.runAndWait()
-        except:
-            pass
+        except Exception:
+            pass  # Fallback silently if TTS fails
     
     def listen(self):
         """Listen for voice commands"""
@@ -154,8 +233,7 @@ class YourClass:  # (whatever your class name is)
             return f"error: {str(e)}"
     
     def extract_name_from_command(self, command):
-        """Extract person name from voice command - FIXED LOGIC"""
-        # Clean the command
+        """Extract person name from voice command"""
         command = command.lower().strip()
         
         # Remove common phrases
@@ -169,74 +247,66 @@ class YourClass:  # (whatever your class name is)
         
         command = command.strip()
         
-        # If command is just a name, return it
         if command and len(command) > 1:
             return command
         return None
     
     def find_photo_by_name(self, person_name):
-        """Find photo for a specific person - FIXED MATCHING"""
+        """Find photo for a specific person"""
         if not person_name:
             return None
         
-        # Clean the name
         person_name = person_name.lower().strip()
         
         for photo in st.session_state.all_photos:
-            # Get filename without extension and clean it
             photo_name = os.path.splitext(photo['filename'])[0].lower().strip()
             
             # Direct match
             if photo_name == person_name:
                 return photo
-            
-            # Partial match (if name contains the search term)
+            # Partial match
             if person_name in photo_name:
                 return photo
-            
-            # Also check the capitalized name
             if person_name.capitalize() in photo['name']:
                 return photo
         
         return None
     
     def process_command(self, command):
-        """Process voice/text commands - FIXED LOGIC"""
+        """Process voice/text commands"""
         command = command.lower()
         
-        # Debug: Show what command was received
-        print(f"DEBUG: Received command: '{command}'")
+        # Common names list for better extraction
+        common_names = ["vlad", "yuri", "viraj", "tatiana", "timur", "ilya", "denis", 
+                        "kostya", "sasha", "vanya", "stas", "valera", "alina", "jack", "emma"]
         
         # Check for photo-related commands
         photo_keywords = ["show", "photo", "picture", "selfie", "see", "display", "view", "give"]
         has_photo_keyword = any(keyword in command for keyword in photo_keywords)
         
-        if has_photo_keyword or any(word in command for word in ["Vlad", "Tatiana", "Yuri", "Kostya"]):
-            # Extract name from command
+        if has_photo_keyword or any(name in command for name in common_names):
             found_name = self.extract_name_from_command(command)
             
-            # If no name found but command has common names, try to extract
             if not found_name:
-                common_names = ["Vlad", "Yuri", "Viraj", "Tatiana", "Timur", "Ilya", "denis", "kostya","Sasha", "Vanya", "Stas","valera", "alina" ]
                 for name in common_names:
                     if name in command:
                         found_name = name
                         break
             
             if found_name:
-                print(f"DEBUG: Looking for photos of '{found_name}'")
                 photo = self.find_photo_by_name(found_name)
-                
                 if photo:
                     st.session_state.current_image = photo
                     response = f"Here's {photo['name']}'s photo! 📸"
-                    print(f"DEBUG: Found photo: {photo['filename']}")
                     return response, photo
                 else:
-                    # Show available names for debugging
                     available_names = [p['name'] for p in st.session_state.all_photos]
-                    response = f"Sorry, no photo found for '{found_name}'. Available photos: {', '.join(available_names) if available_names else 'None'}"
-                    print(f"DEBUG: No photo found. Available: {available_names}")
+                    if available_names:
+                        response = f"Sorry, no photo found for '{found_name}'. Available: {', '.join(available_names[:5])}"
+                        if len(available_names) > 5:
+                            response += f" and {len(available_names)-5} more"
+                    else:
+                        response = f"No photos found for '{found_name}'. Upload photos first!"
                     return response, None
             else:
                 return "Please specify which person's photo you want. Try: 'show me photo of jack'", None
@@ -266,10 +336,10 @@ class YourClass:  # (whatever your class name is)
             return "I can show you photos! Try: 'show me photo of Jack' or 'show random photo' 📷", None
 
 def main():
-    # Custom CSS
-    local_css("static/style.css")
+    # Apply custom CSS
+    apply_custom_css()
     
-    # Add logo
+    # Add logo (graceful if missing)
     add_logo("logo.png", width=60)
     
     social_app = VoicePhotoSocial()
@@ -290,9 +360,8 @@ def main():
                                        key="upload_photo")
         
         if uploaded_file is not None:
-            # Clean the filename - SIMPLIFIED
+            # Clean the filename
             original_name = uploaded_file.name
-            # Remove file extension, clean the name, then add extension back
             name_only = os.path.splitext(original_name)[0]
             clean_name = name_only.lower().replace(" ", "_").strip()
             extension = os.path.splitext(original_name)[1].lower()
@@ -486,11 +555,8 @@ def main():
                 4. Share with friends to build the gallery!
                 """)
     
-    # Footer
-    st.markdown("---")
-    st.markdown("### 🌐 Share this app with friends to build your photo gallery!")
+    # Add dynamic footer (color changes automatically on each interaction)
+    add_dynamic_footer()
 
 if __name__ == "__main__":
     main()
-
-
