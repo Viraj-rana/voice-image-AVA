@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
 
-# Page configuration
+# Page configuration and data information
 st.set_page_config(
     page_title="Voice Photo Social",
     page_icon="📸",
