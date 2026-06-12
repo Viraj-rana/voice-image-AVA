@@ -23,7 +23,7 @@ st.set_page_config(
 # custom css with dynamic footer color support
 def apply_custom_css():
     """Apply custom CSS styles with dynamic footer color"""
-    # Base CSS (no footer color yet - that will be set dynamically)
+    # Base CSS (no footer color  - that will be set dynamically)
     base_css = """
     <style>
     .logo-container {
