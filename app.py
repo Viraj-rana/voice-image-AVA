@@ -3,6 +3,7 @@ import os
 import random
 from PIL import Image
 import base64
+import pytorch
 import io
 import pyttsx3
 import speech_recognition as sr
