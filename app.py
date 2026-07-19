@@ -3,6 +3,7 @@ import os
 import random
 from PIL import Image
 import base64
+import pytorch
 import io
 import pyttsx3
 import speech_recognition as sr
@@ -20,10 +21,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS with dynamic footer color support
+# custom css/tw with dynamics footer color support
 def apply_custom_css():
     """Apply custom CSS styles with dynamic footer color"""
-    # Base CSS (no footer color yet - that will be set dynamically)
+    # Base CSS (no footer color  - that will be set dynamically)
     base_css = """
     <style>
     .logo-container {
