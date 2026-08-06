@@ -20,7 +20,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# custom css/tw with dynamics footer color support
+# custom css/tw with Dynamics footer color support
 def apply_custom_css():
     """Apply custom CSS styles with dynamic footer color"""
     # base css (no footer color  - that will be set dynamically)
